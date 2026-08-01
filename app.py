@@ -4,9 +4,17 @@ import random
 from flask import Flask, flash, redirect, render_template, request, url_for
 from backend.extensions import db
 
+def _normalizar_uri(uri):
+    if uri and uri.startswith("postgres://"):
+        return uri.replace("postgres://", "postgresql://", 1)
+    return uri
+
+
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "racha-local"
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("RACHA_DATABASE_URI", "sqlite:///racha.db")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "racha-local")
+app.config["SQLALCHEMY_DATABASE_URI"] = _normalizar_uri(
+    os.getenv("DATABASE_URL") or os.getenv("RACHA_DATABASE_URI") or "sqlite:///racha.db"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 

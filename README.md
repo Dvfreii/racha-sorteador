@@ -17,7 +17,7 @@ Aplicação web para organizar rachas de futebol. Funciona no computador e no ce
 - Excedente de jogadores fica automaticamente no banco.
 - Equilibra estrelas, posições, craques, iniciantes e histórico recente.
 - Salva os sorteios no histórico, com os goleiros de cada rodada.
-- Salva tudo no banco SQLite.
+- Salva tudo no banco de dados: SQLite local ou PostgreSQL em produção.
 
 ## Requisitos
 
@@ -75,8 +75,8 @@ O sistema identifica:
 Exemplo:
 
 ```text
-1 - Joabe ⭐⭐⭐⭐⭐
-2 - Maria ⭐⭐⭐
+1 - Joabe 
+2 - Maria 
 
 Goleiros
 1 - Dorval
@@ -138,6 +138,7 @@ Quando uma regra for impossível — por exemplo, menos zagueiros do que times �
 ```text
 racha-sorteador/
 ├── app.py                         # Aplicação Flask e rotas
+├── api/index.py                   # Handler WSGI para Vercel
 ├── sorteio_engine.py              # Algoritmo de sorteio
 ├── requirements.txt               # Dependências Python
 ├── Procfile                       # Comando para hospedagem
@@ -172,16 +173,20 @@ Por padrão, o SQLite é criado automaticamente em:
 instance/racha.db
 ```
 
-Para usar outro banco, defina a variável `RACHA_DATABASE_URI`.
+A ordem de escolha da variável de banco é:
 
-Exemplo:
+1. `DATABASE_URL` — usada pela Vercel (PostgreSQL Neon).
+2. `RACHA_DATABASE_URI` — compatível com Render/Railway.
+3. SQLite local (`sqlite:///racha.db`).
+
+Exemplo com PostgreSQL:
 
 ```bash
-set RACHA_DATABASE_URI=sqlite:///racha.db
+set DATABASE_URL=postgresql://usuario:senha@host:5432/racha
 python app.py
 ```
 
-Para produção com vários usuários, prefira PostgreSQL.
+Para produção com vários usuários, use PostgreSQL — o SQLite é apagado a cada deploy em plataformas com sistema de arquivos efêmero (Vercel, Render, Railway).
 
 ## Hospedagem
 
@@ -195,10 +200,25 @@ gunicorn app:app
 
 Plataformas possíveis:
 
+- Vercel.
 - Render.
 - Railway.
 - Fly.io.
 - VPS.
+
+### Vercel (passo a passo)
+
+1. Suba o código para um repositório no GitHub.
+2. Crie uma conta em [vercel.com](https://vercel.com) e conecte sua conta do GitHub.
+3. Clique em **Add New → Project** e importe o repositório.
+4. A Vercel detecta o Flask pelo `requirements.txt` e usa o `api/index.py` como handler.
+5. Clique em **Deploy** e aguarde a conclusão.
+6. Crie um banco de dados PostgreSQL em **Storage → Create → Postgres** (usando Neon).
+7. A Vercel conecta automaticamente o Postgres ao projeto. Verifique em **Settings → Environment Variables** se `DATABASE_URL` foi criada.
+8. Faça **Deployments → Redeploy** após criar o banco, para as tabelas serem criadas.
+9. Acesse a URL gerada (ex.: `https://racha-sorteador.vercel.app`) de qualquer celular.
+
+Observação: a Vercel usa arquivo `vercel.json` já incluído no projeto, apontando tudo para `api/index.py`. As tabelas do banco são criadas automaticamente na inicialização (`db.create_all()`).
 
 ### Render (passo a passo)
 
@@ -226,7 +246,9 @@ Para dados persistentes em produção, configure PostgreSQL e defina `RACHA_DATA
 
 ```text
 PORT=5000
+DATABASE_URL=postgresql://usuario:senha@host:5432/racha
 RACHA_DATABASE_URI=sqlite:///instance/racha.db
+SECRET_KEY=mude-esta-chave-em-producao
 ```
 
 Não publique senhas, tokens ou arquivos `.env` no GitHub.

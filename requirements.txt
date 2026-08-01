@@ -7,4 +7,5 @@ Jinja2>=3.1
 click>=8.1
 itsdangerous>=2.1
 blinker>=1.7
+psycopg2-binary>=2.9
 # Instale com: python -m pip install -r requirements.txt
