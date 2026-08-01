@@ -1,6 +1,8 @@
 import { mountPlayerSelection } from './components/player-selection.js';
+import { mountStarRatings } from './components/star-rating.js';
 
 mountPlayerSelection();
+mountStarRatings();
 
 export default {
   name: 'Sorteador de Racha',

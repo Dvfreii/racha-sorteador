@@ -5,7 +5,9 @@ Aplicação web para organizar rachas de futebol. Funciona no computador e no ce
 ## O que o sistema faz
 
 - Cadastra, edita e exclui jogadores.
-- Notas em estrelas de `0,5` a `5`, escolhidas clicando nas estrelas (meia estrela clicando na metade esquerda).
+- Avaliação visual com exatamente 5 estrelas.
+- Cada estrela aceita meia estrela: lado esquerdo = `0,5`, lado direito = valor inteiro.
+- Estrelas ficam cinzas no estado inicial e amarelas no hover/seleção.
 - Permite digitar qualquer posição.
 - Cards mostram nome, estrelas e posição de cada jogador.
 - Importa listas copiadas do WhatsApp.
@@ -210,6 +212,24 @@ Plataformas possíveis:
 6. Acesse a URL gerada (ex.: `https://racha-sorteador.onrender.com`) de qualquer celular.
 
 Observação: no plano gratuito do Render, o serviço "dorme" após 15 minutos sem uso e o SQLite é apagado a cada novo deploy. Para manter o histórico, use um disco persistente (Render Disk) ou migre para PostgreSQL.
+
+### Railway (alternativa)
+
+1. Crie um projeto em [railway.app](https://railway.app) e conecte o repositório do GitHub.
+2. O Railway instala as dependências pelo `requirements.txt`.
+3. Configure o comando de início como `gunicorn app:app`.
+4. Gere um domínio público em **Settings → Networking**.
+
+Para dados persistentes em produção, configure PostgreSQL e defina `RACHA_DATABASE_URI`. SQLite em ambientes efêmeros pode ser perdido durante redeploys.
+
+### Variáveis de ambiente
+
+```text
+PORT=5000
+RACHA_DATABASE_URI=sqlite:///instance/racha.db
+```
+
+Não publique senhas, tokens ou arquivos `.env` no GitHub.
 
 ## Transformar em aplicativo instalável
 

@@ -147,7 +147,12 @@ def sortear():
         return redirect(url_for("index"))
     try:
         quantidade = int(request.form.get("quantidade_times", 3))
-        tamanhos = request.form.get("tamanhos_times", "").strip() or None
+        tam = request.form.get("jogadores_por_time", "").strip()
+        if tam:
+            por_time = int(tam)
+            tamanhos = str(por_time)
+        else:
+            tamanhos = None
         times = gerar(jogadores, quantidade, tamanhos)
         disponiveis = listar_goleiros()
         embaralhados = list(disponiveis)
