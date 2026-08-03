@@ -1,23 +1,25 @@
 # RachaLab — Sorteador de Times
 
-Aplicação web para organizar rachas de futebol. Funciona no computador e no celular.
+Aplicacao web para organizar rachas de futebol society. Funciona no computador e no celular.
 
 ## O que o sistema faz
 
-- Cadastra, edita e exclui jogadores.
-- Avaliação visual com exatamente 5 estrelas.
-- Cada estrela aceita meia estrela: lado esquerdo = `0,5`, lado direito = valor inteiro.
-- Estrelas ficam cinzas no estado inicial e amarelas no hover/seleção.
-- Permite digitar qualquer posição.
-- Cards mostram nome, estrelas e posição de cada jogador.
+- Cadastra, edita e exclui jogadores com nota, posicoes multiplas e restricoes.
+- Avaliacao visual com estrelas interativas (0,5 a 5).
+- Permite escolher multiplas posicoes e definir a posicao principal (prioridade).
+- Define restricoes: jogadores que nao podem cair no mesmo time.
+- Goleiro definido por checkbox — nao ocupa espaco na lista de posicoes.
 - Importa listas copiadas do WhatsApp.
-- Cadastra goleiros separados dos jogadores de linha.
-- Sorteia qualquer quantidade de jogadores.
-- Permite escolher a quantidade de times e o tamanho de cada time.
-- Excedente de jogadores fica automaticamente no banco.
-- Equilibra estrelas, posições, craques, iniciantes e histórico recente.
-- Salva os sorteios no histórico, com os goleiros de cada rodada.
-- Salva tudo no banco de dados: SQLite local ou PostgreSQL em produção.
+- Sorteia qualquer quantidade de jogadores com algoritmo de balanceamento em 4 regras:
+  1. Distribuicao uniforme de goleiros.
+  2. Diversidade de posicoes (todo time tem zagueiro/fixo).
+  3. Balanceamento de nota tecnica (menor diferenca possivel entre medias).
+  4. Respeito a restricoes mutuas.
+- Exporta resultado formatado para WhatsApp com emojis (🧤🛡️⚽).
+- Salva historico de sorteios no banco de dados.
+- API RESTful JSON para integracao com outros sistemas.
+- Frontend SPA em JavaScript vanilla consumindo a API.
+- Suporte a SQLite local e PostgreSQL em producao.
 
 ## Requisitos
 
@@ -25,12 +27,10 @@ Aplicação web para organizar rachas de futebol. Funciona no computador e no ce
 - Pip.
 - Navegador atualizado.
 
-## Como executar no Windows
-
-Abra o PowerShell ou Prompt de Comando e execute:
+## Como executar
 
 ```bash
-cd C:\Users\Davi\hermes\racha-sorteador
+cd racha-sorteador
 python -m pip install -r requirements.txt
 python app.py
 ```
@@ -41,7 +41,7 @@ Abra no navegador:
 http://127.0.0.1:5000
 ```
 
-Para abrir no celular conectado na mesma rede Wi-Fi, use o IP da máquina:
+Para abrir no celular conectado na mesma rede Wi-Fi, use o IP da maquina:
 
 ```text
 http://SEU-IP:5000
@@ -54,273 +54,223 @@ Para parar o servidor, pressione `Ctrl + C` no terminal.
 ### 1. Cadastrar jogadores
 
 Informe:
-
 - Nome.
-- Nota, clicando nas estrelas: clique na metade esquerda da estrela para meia estrela (ex.: `3,5`) e na estrela inteira para o valor cheio (ex.: `4`).
-- Posição — pode ser uma posição personalizada.
-
-Também é possível editar ou excluir um jogador no próprio card.
+- Nota, clicando nas estrelas (widget interativo de 0,5 a 5).
+- Posicoes — marque todas as posicoes que o jogador faz e selecione a principal (circulo preto).
+- Goleiro — marque o checkbox 🧤 se for goleiro.
+- Restricoes — selecione jogadores com quem nao pode jogar junto.
 
 ### 2. Importar uma lista do WhatsApp
 
-Cole a mensagem completa na área **Colar lista do WhatsApp**.
+Cole a mensagem completa na area **Colar lista do WhatsApp** e clique em **Importar lista**.
 
 O sistema identifica:
-
 - Jogadores numerados antes de `Goleiros`.
 - Goleiros numerados depois de `Goleiros`.
-- Estrelas no nome.
+- Estrelas no nome (⭐).
 - Nomes com emojis e asteriscos.
 
 Exemplo:
 
 ```text
-1 - Joabe 
-2 - Maria 
+1 - Joabe ⭐⭐⭐⭐
+2 - Maria ⭐⭐⭐
+3 - Pedro ⭐⭐⭐⭐⭐
 
 Goleiros
-1 - Dorval
-2 - Joel
+1 - Dorval ⭐⭐⭐
+2 - Joel ⭐⭐
 ```
 
-Linhas de aviso, observações e goleiros vazios são ignoradas.
+Linhas de aviso, observacoes e goleiros vazios sao ignoradas.
 
 ### 3. Selecionar os presentes
 
-Marque os jogadores que participarão do racha.
+Marque os jogadores que participarao do racha. Use **Selecionar todos** para marcar ou desmarcar todos. E necessario selecionar pelo menos 2 jogadores.
 
-Use **Selecione todos** para marcar ou desmarcar todos de uma vez.
+### 4. Sortear
 
-É necessário selecionar pelo menos 2 jogadores.
+Escolha a quantidade de times (2 a 8) e, opcionalmente, o tamanho de cada time. Clique em **Sortear times equilibrados**.
 
-### 4. Definir os times
+O algoritmo testa 4000 combinacoes e escolhe a melhor, respeitando:
+- Goleiros distribuidos uniformemente.
+- Restricoes entre jogadores (nunca no mesmo time).
+- Menor diferenca possivel entre as medias de nota dos times.
+- Todo time com pelo menos um zagueiro/fixo.
+- Maximo de 3 atacantes/pivos por time.
+- Maximo de 1 craque (nota 5) e 1 iniciante (nota <= 2) por time.
+- Evita repetir pares dos ultimos 3 sorteios.
 
-Escolha a quantidade de times (de 2 a 8) e, se quiser, o **tamanho de cada time**.
+### 5. Exportar para WhatsApp
 
-Sem tamanho informado, a divisão é automática:
+Apos o sorteio, clique em **Copiar para WhatsApp** para gerar o texto formatado com emojis:
 
-```text
-20 jogadores e 4 times = 5, 5, 5, 5
-25 jogadores e 3 times = 9, 8, 8
+```
+⚽ *RACHALAB — Times da Rodada* ⚽
+
+*Time A* (Media: 3.5)
+🧤 Joao ★★★★
+⚽ Pedro (Alas) ★★★★
+🛡️ Lucas (Zagueiro / Fixo) ★★★
 ```
 
-Com tamanho informado (ex.: `8`), os primeiros times ficam completos e o último recebe o restante. Se ainda sobrar gente, o excedente vai para o banco:
+### 6. Historico
 
-```text
-20 jogadores, 3 times de 8 = 8, 8, 4
-25 jogadores, 3 times de 8 = 8, 8, 8 e 1 jogador no banco
+Os sorteios salvos aparecem na secao **Historico** com times, jogadores, medias e goleiros. E possivel excluir sorteios individualmente.
+
+## API REST
+
+A API JSON esta disponivel em `/api/`:
+
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| GET | `/api/jogadores` | Lista jogadores ativos |
+| POST | `/api/jogadores` | Cria jogador |
+| GET | `/api/jogadores/<id>` | Detalhe do jogador |
+| PUT | `/api/jogadores/<id>` | Atualiza jogador |
+| DELETE | `/api/jogadores/<id>` | Remove jogador (soft delete) |
+| GET | `/api/posicoes` | Lista posicoes |
+| POST | `/api/sorteios/sortear` | Executa sorteio (nao salva) |
+| POST | `/api/sorteios` | Salva sorteio no historico |
+| GET | `/api/sorteios` | Lista historico |
+| GET | `/api/sorteios/<id>` | Detalhe do sorteio |
+| DELETE | `/api/sorteios/<id>` | Exclui sorteio |
+| POST | `/api/sorteios/whatsapp` | Formata resultado para WhatsApp |
+| POST | `/api/importar-whatsapp` | Importa lista do WhatsApp |
+
+Body do POST/PUT jogadores:
+```json
+{
+  "nome": "Joao",
+  "nota": 4.0,
+  "is_goleiro": false,
+  "posicoes": [1, 3],
+  "posicao_primaria_id": 1,
+  "restricoes": [5, 7]
+}
 ```
-
-Para o sorteio acontecer, é preciso ter mais jogadores do que `tamanho × (times − 1)`. Ex.: para 3 times de 8, é preciso mais de 16 jogadores.
-
-### 5. Definir goleiros
-
-Os goleiros ficam separados do sorteio dos jogadores de linha. Cadastre os goleiros do racha e o sistema sorteia um para cada time; times sem goleiro cadastrado usam goleiro improvisado.
-
-O histórico mostra a seção **Goleiros** com os goleiros de cada sorteio salvo.
-
-## Como o equilíbrio funciona
-
-O algoritmo testa várias combinações e escolhe a melhor pontuação possível considerando:
-
-- Soma de estrelas dos times.
-- Distribuição de jogadores de 5 estrelas.
-- Distribuição de jogadores com até 2 estrelas.
-- Presença de zagueiros, quando cadastrados.
-- Limite de atacantes por time, quando possível.
-- Repetição de companheiros nos últimos 3 sorteios.
-- Tamanho dos times.
-
-Quando uma regra for impossível — por exemplo, menos zagueiros do que times — o sistema continua funcionando e minimiza o problema.
 
 ## Estrutura do projeto
 
 ```text
 racha-sorteador/
-├── app.py                         # Aplicação Flask e rotas
-├── api/index.py                   # Handler WSGI para Vercel
-├── sorteio_engine.py              # Algoritmo de sorteio
-├── requirements.txt               # Dependências Python
-├── Procfile                       # Comando para hospedagem
+├── app.py                         # Aplicacao Flask, rotas e seed de posicoes
+├── api/
+│   ├── index.py                   # Handler WSGI para Vercel
+│   ├── jogadores_bp.py            # Blueprint /api/jogadores
+│   ├── posicoes_bp.py             # Blueprint /api/posicoes
+│   ├── sorteios_bp.py             # Blueprint /api/sorteios
+│   └── whatsapp_bp.py             # Blueprint WhatsApp + importacao
+├── sorteio_engine.py              # Algoritmo de sorteio v2 (4 regras, 4000 iteracoes)
+├── migrate_v2.py                  # Migracao do schema v1 para v2
+├── requirements.txt               # Dependencias Python
+├── vercel.json                    # Configuracao Vercel
 ├── README.md                      # Este manual
 ├── backend/
-│   ├── extensions.py              # Banco SQLAlchemy
-│   ├── models/entities.py         # Jogador, goleiro e sorteio
+│   ├── extensions.py              # Instancia SQLAlchemy
+│   ├── models/
+│   │   └── entities.py            # Jogador (unificado), Posicao, Sorteio
 │   └── services/
-│       ├── draw_service.py        # Serviço de sorteios
-│       ├── player_service.py      # Serviço de jogadores
+│       ├── draw_service.py        # Servico de sorteios
+│       ├── player_service.py      # CRUD de jogadores
+│       ├── whatsapp_formatter.py  # Formatacao WhatsApp com emojis
 │       └── whatsapp_parser.py     # Leitor de listas do WhatsApp
 ├── templates/
-│   └── index.html                 # Interface web
+│   └── index.html                 # SPA shell
 ├── static/
 │   ├── style.css                  # Estilos responsivos + widget de estrelas
 │   └── js/
-│       ├── app.js                 # Entrada do frontend
-│       ├── components/             # Componentes da tela
-│       ├── hooks/                  # Lógica reutilizável
-│       ├── utils/                  # Utilitários DOM
-│       ├── api/                    # Cliente HTTP
-│       └── services/               # Serviços do frontend
+│       ├── app.js                 # Bootstrap da SPA
+│       ├── config.js              # URLs da API
+│       ├── state.js               # Estado global
+│       ├── api/                   # Clientes HTTP (fetch)
+│       ├── components/            # Componentes (form, list, pickers, panels)
+│       └── utils/                 # DOM helpers, formatacao
+├── tests/
+│   ├── test_api.py                # Testes da API
+│   ├── test_sorteio_engine.py     # Testes do algoritmo
+│   └── test_whatsapp.py           # Testes do formatador
 └── instance/
-    └── racha.db                   # Banco criado automaticamente
+    └── racha.db                   # Banco SQLite criado automaticamente
 ```
 
 ## Banco de dados
 
-Por padrão, o SQLite é criado automaticamente em:
+Por padrao, o SQLite e criado automaticamente em `instance/racha.db`. As posicoes sao semeadas na primeira execucao.
 
-```text
-instance/racha.db
-```
-
-A ordem de escolha da variável de banco é:
-
+Ordem de escolha da variavel de banco:
 1. `DATABASE_URL` — usada pela Vercel (PostgreSQL Neon).
-2. `RACHA_DATABASE_URI` — compatível com Render/Railway.
+2. `RACHA_DATABASE_URI` — compativel com Render/Railway.
 3. SQLite local (`sqlite:///racha.db`).
 
-Exemplo com PostgreSQL:
-
-```bash
-set DATABASE_URL=postgresql://usuario:senha@host:5432/racha
-python app.py
-```
-
-Para produção com vários usuários, use PostgreSQL — o SQLite é apagado a cada deploy em plataformas com sistema de arquivos efêmero (Vercel, Render, Railway).
+Para producao com varios usuarios, use PostgreSQL.
 
 ## Hospedagem
 
-A aplicação pode ser hospedada como um único serviço Flask.
+### Vercel
 
-O arquivo `Procfile` usa:
+1. Suba o codigo para um repositorio no GitHub.
+2. Crie uma conta em [vercel.com](https://vercel.com) e conecte seu GitHub.
+3. Clique em **Add New → Project** e importe o repositorio.
+4. A Vercel detecta o Flask pelo `requirements.txt` e usa `api/index.py` como handler.
+5. Em **Settings → Environment Variables**, configure `DATABASE_URL` com as credenciais do PostgreSQL (Neon ou Vercel Postgres).
+6. Clique em **Deploy**.
 
-```bash
-gunicorn app:app
+O arquivo `vercel.json` ja esta configurado para rotear todas as requisicoes para `api/index.py`. Para usar o banco PostgreSQL da Vercel:
+
+```text
+Settings → Environment Variables:
+  DATABASE_URL=postgresql://...
 ```
 
-Plataformas possíveis:
+Servicos gratuitos compativeis com PostgreSQL:
+- [Neon](https://neon.tech) — PostgreSQL serverless gratuito.
+- Vercel Postgres — integrado a Vercel.
 
-- Vercel.
-- Render.
-- Railway.
-- Fly.io.
-- VPS.
+### Render
 
-### Vercel (passo a passo)
+1. Suba o codigo para o GitHub.
+2. Crie um Web Service em [render.com](https://render.com).
+3. Build Command: `pip install -r requirements.txt`
+4. Start Command: `gunicorn app:app`
+5. Configure `DATABASE_URL` nas variaveis de ambiente.
 
-1. Suba o código para um repositório no GitHub.
-2. Crie uma conta em [vercel.com](https://vercel.com) e conecte sua conta do GitHub.
-3. Clique em **Add New → Project** e importe o repositório.
-4. A Vercel detecta o Flask pelo `requirements.txt` e usa o `api/index.py` como handler.
-5. Clique em **Deploy** e aguarde a conclusão.
-6. Crie um banco de dados PostgreSQL em **Storage → Create → Postgres** (usando Neon).
-7. A Vercel conecta automaticamente o Postgres ao projeto. Verifique em **Settings → Environment Variables** se `DATABASE_URL` foi criada.
-8. Faça **Deployments → Redeploy** após criar o banco, para as tabelas serem criadas.
-9. Acesse a URL gerada (ex.: `https://racha-sorteador.vercel.app`) de qualquer celular.
-
-Observação: a Vercel usa arquivo `vercel.json` já incluído no projeto, apontando tudo para `api/index.py`. As tabelas do banco são criadas automaticamente na inicialização (`db.create_all()`).
-
-### Render (passo a passo)
-
-1. Suba o código para um repositório no GitHub.
-2. Crie uma conta em [render.com](https://render.com) e conecte seu GitHub.
-3. Clique em **New → Web Service** e selecione o repositório.
-4. Configure:
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app`
-5. Clique em **Create Web Service** e aguarde o deploy.
-6. Acesse a URL gerada (ex.: `https://racha-sorteador.onrender.com`) de qualquer celular.
-
-Observação: no plano gratuito do Render, o serviço "dorme" após 15 minutos sem uso e o SQLite é apagado a cada novo deploy. Para manter o histórico, use um disco persistente (Render Disk) ou migre para PostgreSQL.
-
-### Railway (alternativa)
-
-1. Crie um projeto em [railway.app](https://railway.app) e conecte o repositório do GitHub.
-2. O Railway instala as dependências pelo `requirements.txt`.
-3. Configure o comando de início como `gunicorn app:app`.
-4. Gere um domínio público em **Settings → Networking**.
-
-Para dados persistentes em produção, configure PostgreSQL e defina `RACHA_DATABASE_URI`. SQLite em ambientes efêmeros pode ser perdido durante redeploys.
-
-### Variáveis de ambiente
+## Variaveis de ambiente
 
 ```text
 PORT=5000
 DATABASE_URL=postgresql://usuario:senha@host:5432/racha
-RACHA_DATABASE_URI=sqlite:///instance/racha.db
+RACHA_DATABASE_URI=sqlite:///racha.db
 SECRET_KEY=mude-esta-chave-em-producao
 ```
 
-Não publique senhas, tokens ou arquivos `.env` no GitHub.
-
-## Transformar em aplicativo instalável
-
-O modo web hospedado é o caminho mais simples. Futuramente, o projeto pode virar:
-
-- PWA instalável pelo navegador.
-- Aplicativo desktop com Tauri.
-- Aplicativo desktop com Electron.
-
-## Verificação rápida
-
-Compilar os arquivos Python:
+## Testes
 
 ```bash
-python -m py_compile app.py sorteio_engine.py backend/models/entities.py backend/services/*.py
+python -m pytest tests/ -v
 ```
 
-Depois, abra o navegador e confirme:
+17 testes cobrindo API, algoritmo de sorteio e formatacao WhatsApp.
 
-1. A página carrega.
-2. Um jogador pode ser cadastrado com nota em estrelas.
-3. Uma lista do WhatsApp pode ser importada.
-4. Os jogadores podem ser selecionados.
-5. A quantidade de times pode ser alterada.
-6. Com tamanho `8`, 20 jogadores em 3 times geram `8/8/4` e 25 geram `8/8/8` com 1 no banco.
-7. O sorteio exibe todos os jogadores uma única vez.
+## Solucao de problemas
 
-## Observações
+### `python` nao e reconhecido
 
-- Os goleiros não recebem nota e não entram na divisão dos jogadores de linha.
-- A exclusão é lógica: o jogador deixa de aparecer, mas o histórico é preservado.
-- O banco SQLite local não deve ser apagado se você quiser manter o histórico.
-- Para uso público, adicione autenticação, proteção CSRF e migrações de banco.
-
-## Solução de problemas
-
-### `python` não é reconhecido
-
-Instale o Python e marque a opção **Add Python to PATH** durante a instalação.
+Instale o Python e marque **Add Python to PATH** durante a instalacao.
 
 ### Porta 5000 ocupada
-
-No Windows PowerShell:
 
 ```bash
 $env:PORT=5001
 python app.py
 ```
 
-Depois acesse:
+### Alteracoes nao aparecem
 
-```text
-http://127.0.0.1:5001
-```
+Atualize com `Ctrl + F5`.
 
-### Alterações não aparecem
+## Versao
 
-Atualize a página com:
-
-```text
-Ctrl + F5
-```
-
-## Licença
-
-Uso privado.
-
-## Versão
-
-1.1.0
+2.0.0
 
 Bom racha! ⚽
