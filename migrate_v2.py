@@ -38,20 +38,22 @@ def migrate():
                 db.session.add(Posicao(nome=nome))
         db.session.commit()
 
-        # Migrate old posicao string -> N:N
+        from sqlalchemy import text  # noqa: E402
+
+        # Migrate old posicao string -> N:N (raw SQL — ORM no longer maps old column)
         posicao_map = {p.nome.lower().replace(" / ", "/").replace("-", ""): p for p in Posicao.query.all()}
-        for j in Jogador.query.filter_by(ativo=True).all():
-            if not j.posicoes:
-                old = getattr(j, "posicao", "")
-                if old:
-                    key = old.strip().lower().replace(" / ", "/").replace("-", "")
-                    pos = posicao_map.get(key)
-                    if pos:
-                        j.posicoes.append(pos)
-        db.session.commit()
+        try:
+            rows = db.session.execute(text("SELECT id, posicao FROM jogador WHERE posicao IS NOT NULL AND posicao != ''")).fetchall()
+            for row in rows:
+                jid, old = row[0], row[1].strip().lower().replace(" / ", "/").replace("-", "")
+                pos = posicao_map.get(old)
+                if pos:
+                    db.session.execute(text("INSERT OR IGNORE INTO jogador_posicoes (jogador_id, posicao_id) VALUES (:jid, :pid)"), {"jid": jid, "pid": pos.id})
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
         # Migrate SorteioGoleiro -> SorteioJogador.is_goleiro_no_time
-        from sqlalchemy import text  # noqa: E402
         try:
             db.session.execute(text(
                 "INSERT INTO sorteio_jogador (sorteio_id, jogador_id, time, is_goleiro_no_time) "
