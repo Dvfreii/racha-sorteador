@@ -1,8 +1,8 @@
 from datetime import datetime
 import os
-import random
 from flask import Flask, flash, redirect, render_template, request, url_for
 from backend.extensions import db
+
 
 def _normalizar_uri(uri):
     if uri and uri.startswith("postgres://"):
@@ -27,11 +27,10 @@ from api.whatsapp_bp import whatsapp_bp
 app.register_blueprint(sorteios_bp)
 app.register_blueprint(whatsapp_bp)
 
-from backend.models.entities import Jogador, Sorteio, SorteioJogador
+from backend.models.entities import Jogador, Sorteio
 from backend.services.player_service import (
-    buscar_selecionados, criar, desativar,
-    editar, listar_ativos,
-    validar_formulario, validar_selecao,
+    buscar_selecionados, criar, desativar, editar,
+    listar_ativos, validar_formulario, validar_selecao,
 )
 from backend.services.draw_service import gerar, salvar
 from backend.services.whatsapp_parser import importar_lista
@@ -40,10 +39,17 @@ with app.app_context():
     db.create_all()
 
 
+def _listar_goleiros():
+    """Helper: list active goleiros using is_goleiro flag."""
+    return Jogador.query.filter_by(is_goleiro=True, ativo=True).order_by(Jogador.nome).all()
+
+
 @app.route("/")
 def index():
-    historico = Sorteio.query.order_by(Sorteio.data.desc()).all()
-    return render_template("index.html", jogadores=listar_ativos(db), goleiros=listar_goleiros(), times=None, selecionados=[], historico=historico)
+    return render_template("index.html")
+
+
+# -- Legacy form routes (backward compat) --
 
 
 @app.post("/sorteios/<int:sorteio_id>/excluir")
@@ -51,6 +57,7 @@ def excluir_sorteio(sorteio_id):
     sorteio = db.get_or_404(Sorteio, sorteio_id)
     db.session.delete(sorteio)
     db.session.commit()
+    flash("Sorteio excluido.", "ok")
     return redirect(url_for("index"))
 
 
@@ -58,7 +65,7 @@ def excluir_sorteio(sorteio_id):
 def excluir_todos_sorteios():
     Sorteio.query.delete()
     db.session.commit()
-    flash("Histórico de sorteios excluído.", "ok")
+    flash("Historico de sorteios excluido.", "ok")
     return redirect(url_for("index"))
 
 
@@ -66,14 +73,14 @@ def excluir_todos_sorteios():
 def criar_jogador():
     nome = request.form.get("nome", "").strip()
     try:
-        estrelas = float(request.form.get("estrelas", 3).replace(",", "."))
+        nota = float(request.form.get("estrelas", 3).replace(",", "."))
     except ValueError:
-        estrelas = 0
-    erro = validar_formulario(nome, estrelas)
+        nota = 0
+    erro = validar_formulario(nome, nota)
     if erro:
         flash(erro, "erro")
     else:
-        criar(db, nome, estrelas, request.form.get("posicao", "").strip())
+        criar(db, nome, nota, [], [], False)
         flash("Jogador cadastrado.", "ok")
     return redirect(url_for("index"))
 
@@ -81,6 +88,7 @@ def criar_jogador():
 @app.post("/jogadores/<int:jogador_id>/excluir")
 def excluir_jogador(jogador_id):
     desativar(db, jogador_id)
+    flash("Jogador removido.", "ok")
     return redirect(url_for("index"))
 
 
@@ -88,7 +96,7 @@ def excluir_jogador(jogador_id):
 def excluir_todos_jogadores():
     Jogador.query.filter_by(ativo=True).update({"ativo": False})
     db.session.commit()
-    flash("Todos os jogadores foram excluídos da lista.", "ok")
+    flash("Todos os jogadores foram excluidos.", "ok")
     return redirect(url_for("index"))
 
 
@@ -96,14 +104,14 @@ def excluir_todos_jogadores():
 def editar_jogador(jogador_id):
     nome = request.form.get("nome", "").strip()
     try:
-        estrelas = float(request.form.get("estrelas", 3).replace(",", "."))
+        nota = float(request.form.get("estrelas", 3).replace(",", "."))
     except ValueError:
-        estrelas = 0
-    erro = validar_formulario(nome, estrelas)
+        nota = 0
+    erro = validar_formulario(nome, nota)
     if erro:
         flash(erro, "erro")
     else:
-        editar(db, jogador_id, nome, estrelas, request.form.get("posicao", "").strip())
+        editar(db, jogador_id, nome, nota, [], [], False)
         flash("Jogador atualizado.", "ok")
     return redirect(url_for("index"))
 
@@ -114,7 +122,7 @@ def adicionar_goleiro():
     if not nome:
         flash("Informe o nome do goleiro.", "erro")
     else:
-        criar_goleiro(db, nome)
+        criar(db, nome, 3.0, [], [], True)
         flash("Goleiro adicionado.", "ok")
     return redirect(url_for("index"))
 
@@ -123,31 +131,31 @@ def adicionar_goleiro():
 def editar_goleiro_route(goleiro_id):
     nome = request.form.get("nome", "").strip()
     if nome:
-        editar_goleiro(db, goleiro_id, nome)
+        editar(db, goleiro_id, nome, 3.0, [], [], True)
         flash("Goleiro atualizado.", "ok")
     return redirect(url_for("index"))
 
 
 @app.post("/goleiros/<int:goleiro_id>/excluir")
 def excluir_goleiro(goleiro_id):
-    desativar_goleiro(db, goleiro_id)
+    desativar(db, goleiro_id)
+    flash("Goleiro removido.", "ok")
     return redirect(url_for("index"))
 
 
 @app.post("/importar-whatsapp")
 def importar_whatsapp():
-    jogadores, goleiros = importar_lista(request.form.get("lista", ""))
+    jogadores, goleiros_novo = importar_lista(request.form.get("lista", ""))
     adicionados = 0
     for item in jogadores:
         if not Jogador.query.filter_by(nome=item["nome"], ativo=True).first():
-            criar(db, item["nome"], item["estrelas"], "")
+            criar(db, item["nome"], item["estrelas"], [], [], False)
             adicionados += 1
-    goleiros_novos = 0
-    for item in goleiros:
-        if not Goleiro.query.filter_by(nome=item["nome"], ativo=True).first():
-            criar_goleiro(db, item["nome"])
-            goleiros_novos += 1
-    flash(f"Importados {adicionados} jogadores e {goleiros_novos} goleiros.", "ok")
+    for item in goleiros_novo:
+        if not Jogador.query.filter_by(nome=item["nome"], is_goleiro=True, ativo=True).first():
+            criar(db, item["nome"], item["estrelas"], [], [], True)
+            adicionados += 1
+    flash(f"Importados {adicionados} jogadores/goleiros.", "ok")
     return redirect(url_for("index"))
 
 
@@ -160,18 +168,15 @@ def sortear():
     erro = validar_selecao(ids)
     jogadores = buscar_selecionados(ids) if not erro else []
     if erro or len(jogadores) != len(ids):
-        flash(erro or "Há jogadores inválidos na seleção.", "erro")
+        flash(erro or "Ha jogadores invalidos na selecao.", "erro")
         return redirect(url_for("index"))
     try:
         quantidade = int(request.form.get("quantidade_times", 3))
         tam = request.form.get("jogadores_por_time", "").strip()
-        if tam:
-            por_time = int(tam)
-            tamanhos = str(por_time)
-        else:
-            tamanhos = None
+        tamanhos = str(int(tam)) if tam else None
         times = gerar(jogadores, quantidade, tamanhos)
-        disponiveis = listar_goleiros()
+        disponiveis = _listar_goleiros()
+        import random
         embaralhados = list(disponiveis)
         random.shuffle(embaralhados)
         goleiros_por_time = {}
@@ -180,7 +185,7 @@ def sortear():
     except ValueError as erro:
         flash(str(erro), "erro")
         return redirect(url_for("index"))
-    return render_template("index.html", jogadores=listar_ativos(db), goleiros=listar_goleiros(), times=times, goleiros_por_time=goleiros_por_time, selecionados=ids, historico=Sorteio.query.order_by(Sorteio.data.desc()).all())
+    return render_template("index.html", jogadores=listar_ativos(db), goleiros=_listar_goleiros(), times=times, goleiros_por_time=goleiros_por_time, selecionados=ids, historico=Sorteio.query.order_by(Sorteio.data.desc()).all())
 
 
 @app.post("/sorteios/salvar")
@@ -188,10 +193,14 @@ def salvar_sorteio():
     ids = request.form.getlist("jogador_id")
     times = request.form.getlist("time")
     if len(ids) != len(times) or not ids:
-        flash("Sorteio inválido.", "erro")
+        flash("Sorteio invalido.", "erro")
         return redirect(url_for("index"))
-    salvar(db, ids, times, request.form.getlist("goleiro_id"))
-    flash("Sorteio salvo no histórico.", "ok")
+    times_dict = {}
+    for jogador_id, time in zip(ids, times):
+        times_dict.setdefault(time, []).append(int(jogador_id))
+    goleiros_ids = {t: None for t in times_dict}
+    salvar(db, times_dict, goleiros_ids)
+    flash("Sorteio salvo no historico.", "ok")
     return redirect(url_for("index"))
 
 
