@@ -34,11 +34,13 @@ export function renderSorteadorPanel(container) {
   });
 
   qs('#btn-sortear')?.addEventListener('click', async () => {
-    const ids = qsa('.jogador-check')
+    const checks = qsa('.jogador-check');
+
+    if (!validateSelection(checks)) return;
+
+    const ids = checks
       .filter(el => el.checked)
       .map(el => parseInt(el.value));
-
-    if (!validateSelection(ids)) return;
 
     const quantidade = parseInt(qs('#team-count').value);
     const porTime = qs('#por-time').value.trim();

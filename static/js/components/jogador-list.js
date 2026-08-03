@@ -1,5 +1,6 @@
 import { estrelas, iconePosicao } from '../utils/format.js';
-import { deleteJogador } from '../api/jogadores.js';
+import { deleteJogador, updateJogador } from '../api/jogadores.js';
+import { mountStarRatings } from './star-rating.js';
 import state from '../state.js';
 
 function esc(str) {
@@ -28,7 +29,7 @@ export function renderJogadorList(container, jogadores) {
             <span class="player-meta">
               <span class="player-stars">${estrelas(j.nota)}</span>
               ${j.is_goleiro ? '<span class="badge bg-info">\uD83E\uDDE4</span>' : ''}
-              <span class="player-pos">${(j.posicoes || []).map(p => p.nome).join(', ') || '-'}</span>
+              <span class="player-pos">${(j.posicoes || []).map(p => p.id === j.posicao_primaria_id ? `★${p.nome}` : p.nome).join(', ') || '-'}</span>
             </span>
           </span>
         </label>
@@ -50,12 +51,100 @@ export function renderJogadorList(container, jogadores) {
     btn.addEventListener('click', () => {
       const id = parseInt(btn.dataset.id);
       const jogador = state.jogadores.find(j => j.id === id);
-      if (jogador) {
-        import('./jogador-form.js').then(m => {
-          const formContainer = document.getElementById('section-form');
-          if (formContainer) m.renderJogadorForm(formContainer, jogador);
-        });
-      }
+      if (jogador) openEditModal(jogador);
     });
+  });
+}
+
+function openEditModal(jogador) {
+  const modal = document.getElementById('edit-modal');
+  const nota = jogador.nota;
+
+  const stars = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5];
+  let starHtml = '<fieldset class="rate mb-2">';
+  for (const s of stars) {
+    const checked = nota === s ? 'checked' : '';
+    const sid = 'em' + s.toString().replace('.', '_');
+    starHtml += `<input type="radio" id="${sid}" name="edit-nota" value="${s}" ${checked}><label for="${sid}" title="${s} estrelas"></label>`;
+  }
+  starHtml += '</fieldset>';
+
+  const posicoesSemGoleiro = state.posicoes.filter(p => p.nome.toLowerCase() !== 'goleiro');
+  const idsSelecionados = new Set((jogador.posicoes || []).map(p => p.id));
+  let posHtml = '<div class="posicao-picker">';
+  for (const p of posicoesSemGoleiro) {
+    const checked = idsSelecionados.has(p.id) ? 'checked' : '';
+    const isPrimary = jogador.posicao_primaria_id === p.id ? 'checked' : '';
+    posHtml += `
+      <label class="posicao-chip">
+        <input type="checkbox" name="edit-posicoes" value="${p.id}" ${checked}>
+        <span>${p.nome}</span>
+        <input type="radio" name="edit-posicao-primaria" value="${p.id}" class="ms-1" ${isPrimary} title="Posicao principal">
+      </label>`;
+  }
+  posHtml += '</div>';
+
+  let restrHtml = '<select id="edit-restricoes" class="form-select" multiple size="5">';
+  for (const j of state.jogadores) {
+    if (j.id === jogador.id) continue;
+    const hasRestr = (jogador.restricoes || []).some(r => r.id === j.id);
+    restrHtml += `<option value="${j.id}" ${hasRestr ? 'selected' : ''}>${j.nome} ${j.is_goleiro ? '\uD83E\uDDE4' : ''}</option>`;
+  }
+  restrHtml += '</select>';
+
+  modal.querySelector('.modal-body').innerHTML = `
+    <label>Nome completo</label>
+    <input id="edit-nome" class="form-control mb-2" value="${esc(jogador.nome)}" required>
+    <label>Nota do jogador</label>
+    ${starHtml}
+    <label>Posicao</label>
+    ${posHtml}
+    <small class="text-muted d-block mt-1">Marque as posicoes e selecione a principal (⚫)</small>
+    <div class="form-check mt-2">
+      <input id="edit-goleiro" type="checkbox" class="form-check-input" ${jogador.is_goleiro ? 'checked' : ''}>
+      <label class="form-check-label" for="edit-goleiro">🧤 E goleiro?</label>
+    </div>
+    <label class="mt-2">Restricoes (nao joga com)</label>
+    ${restrHtml}
+    <small class="text-muted">Ctrl+click para selecionar multiplos</small>
+  `;
+
+  modal.dataset.jogadorId = jogador.id;
+  mountStarRatings();
+
+  const bsModal = new bootstrap.Modal(modal);
+  bsModal.show();
+}
+
+const btnSalvar = document.getElementById('btn-salvar-edit');
+if (btnSalvar) {
+  btnSalvar.addEventListener('click', async () => {
+    const modal = document.getElementById('edit-modal');
+    const id = parseInt(modal.dataset.jogadorId);
+    const notaRadio = modal.querySelector('input[name="edit-nota"]:checked');
+    const posicoes = [...modal.querySelectorAll('input[name="edit-posicoes"]:checked')]
+      .map(el => parseInt(el.value));
+    const primariaRadio = modal.querySelector('input[name="edit-posicao-primaria"]:checked');
+    const posicao_primaria_id = primariaRadio ? parseInt(primariaRadio.value) : null;
+
+    const restrSel = modal.querySelectorAll('#edit-restricoes option:checked');
+    const restricoes = [...restrSel].map(o => parseInt(o.value));
+
+    const data = {
+      nome: modal.querySelector('#edit-nome').value.trim(),
+      nota: parseFloat(notaRadio?.value || '3'),
+      is_goleiro: modal.querySelector('#edit-goleiro').checked,
+      posicoes,
+      posicao_primaria_id,
+      restricoes,
+    };
+
+    try {
+      await updateJogador(id, data);
+      bootstrap.Modal.getInstance(modal).hide();
+      window.dispatchEvent(new CustomEvent('jogadores-changed'));
+    } catch (err) {
+      alert(err.message);
+    }
   });
 }

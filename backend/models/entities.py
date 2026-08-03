@@ -21,8 +21,10 @@ class Jogador(db.Model):
     nota = db.Column(db.Float, nullable=False, default=3.0)
     is_goleiro = db.Column(db.Boolean, default=False, nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
+    posicao_primaria_id = db.Column(db.Integer, db.ForeignKey("posicao.id"), nullable=True)
 
     posicoes = db.relationship("Posicao", secondary=jogador_posicoes, lazy="joined")
+    posicao_primaria = db.relationship("Posicao", foreign_keys=[posicao_primaria_id])
     restricoes = db.relationship(
         "Jogador",
         secondary=jogador_restricoes,

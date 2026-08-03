@@ -37,6 +37,11 @@ from backend.services.whatsapp_parser import importar_lista
 
 with app.app_context():
     db.create_all()
+    from backend.models.entities import Posicao
+    for nome in ["Goleiro", "Zagueiro / Fixo", "Lateral", "Meio-Campo", "Alas", "Atacante / Pivo"]:
+        if not Posicao.query.filter_by(nome=nome).first():
+            db.session.add(Posicao(nome=nome))
+    db.session.commit()
 
 
 def _listar_goleiros():

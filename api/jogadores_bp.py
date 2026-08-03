@@ -34,6 +34,7 @@ def criar_jogador():
         data.get("posicoes", []),
         data.get("restricoes", []),
         data.get("is_goleiro", False),
+        data.get("posicao_primaria_id"),
     )
     return jsonify(_serializar(jogador)), 201
 
@@ -65,6 +66,7 @@ def editar_jogador(jogador_id):
         data.get("posicoes", []),
         data.get("restricoes", []),
         data.get("is_goleiro", False),
+        data.get("posicao_primaria_id"),
     )
     return jsonify(_serializar(jogador))
 
@@ -84,6 +86,7 @@ def _serializar(jogador):
         "nota": jogador.nota,
         "is_goleiro": jogador.is_goleiro,
         "ativo": jogador.ativo,
+        "posicao_primaria_id": jogador.posicao_primaria_id,
         "posicoes": [{"id": p.id, "nome": p.nome} for p in (jogador.posicoes or [])],
         "restricoes": [{"id": r.id, "nome": r.nome} for r in (jogador.restricoes or [])],
     }

@@ -9,8 +9,8 @@ def listar_ativos(db, incluir_inativos=False):
     return q.order_by(Jogador.nome).all()
 
 
-def criar(db, nome, nota, posicoes_ids, restricoes_ids, is_goleiro):
-    jogador = Jogador(nome=nome, nota=nota, is_goleiro=is_goleiro)
+def criar(db, nome, nota, posicoes_ids, restricoes_ids, is_goleiro, posicao_primaria_id=None):
+    jogador = Jogador(nome=nome, nota=nota, is_goleiro=is_goleiro, posicao_primaria_id=posicao_primaria_id)
     db.session.add(jogador)
     db.session.flush()
     if posicoes_ids:
@@ -21,11 +21,12 @@ def criar(db, nome, nota, posicoes_ids, restricoes_ids, is_goleiro):
     return jogador
 
 
-def editar(db, jogador_id, nome, nota, posicoes_ids, restricoes_ids, is_goleiro):
+def editar(db, jogador_id, nome, nota, posicoes_ids, restricoes_ids, is_goleiro, posicao_primaria_id=None):
     jogador = db.get_or_404(Jogador, jogador_id)
     jogador.nome = nome
     jogador.nota = nota
     jogador.is_goleiro = is_goleiro
+    jogador.posicao_primaria_id = posicao_primaria_id
     jogador.posicoes = Posicao.query.filter(Posicao.id.in_(posicoes_ids)).all() if posicoes_ids else []
     jogador.restricoes = Jogador.query.filter(Jogador.id.in_(restricoes_ids)).all() if restricoes_ids else []
     db.session.commit()
