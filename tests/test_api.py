@@ -84,3 +84,58 @@ def test_get_posicoes(client):
     r = client.get("/api/posicoes")
     assert r.status_code == 200
     assert len(r.get_json()) == 6
+
+
+def test_sortear_sem_salvar(client):
+    ids = []
+    for nome in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]:
+        r = client.post("/api/jogadores", json={"nome": nome, "nota": 3.0})
+        ids.append(r.get_json()["id"])
+
+    r = client.post("/api/sorteios/sortear", json={
+        "jogadores": ids,
+        "quantidade_times": 3,
+    })
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "times" in data
+    assert "goleiros" in data
+    assert "medias" in data
+    assert len(data["times"]) == 3
+
+
+def test_salvar_sorteio(client):
+    ids = []
+    for nome in ["A", "B", "C", "D", "E", "F"]:
+        r = client.post("/api/jogadores", json={"nome": nome, "nota": 3.0})
+        ids.append(r.get_json()["id"])
+
+    r = client.post("/api/sorteios/sortear", json={"jogadores": ids, "quantidade_times": 2})
+    data = r.get_json()
+    times_ids = {}
+    for nome, jogadores in data["times"].items():
+        times_ids[nome] = [j["id"] for j in jogadores]
+
+    r = client.post("/api/sorteios", json={"times": times_ids, "goleiros": {}})
+    assert r.status_code == 201
+
+
+def test_historico_sorteios(client):
+    r = client.get("/api/sorteios")
+    assert r.status_code == 200
+    assert isinstance(r.get_json(), list)
+
+
+def test_whatsapp_format(client):
+    r = client.post("/api/sorteios/whatsapp", json={
+        "times": {
+            "Time A": [
+                {"nome": "Joao", "nota": 4, "is_goleiro": True, "posicoes": [{"nome": "Goleiro"}]},
+                {"nome": "Pedro", "nota": 3, "is_goleiro": False, "posicoes": [{"nome": "Alas"}]},
+            ],
+        },
+        "goleiros": {"Time A": {"nome": "Joao", "nota": 4, "is_goleiro": True, "posicoes": [{"nome": "Goleiro"}]}},
+        "medias": {"Time A": 3.5},
+    })
+    assert r.status_code == 200
+    assert "RACHALAB" in r.get_json()["texto"]

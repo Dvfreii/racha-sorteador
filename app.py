@@ -22,6 +22,10 @@ from api.jogadores_bp import jogadores_bp
 from api.posicoes_bp import posicoes_bp
 app.register_blueprint(jogadores_bp)
 app.register_blueprint(posicoes_bp)
+from api.sorteios_bp import sorteios_bp
+from api.whatsapp_bp import whatsapp_bp
+app.register_blueprint(sorteios_bp)
+app.register_blueprint(whatsapp_bp)
 
 from backend.models.entities import Jogador, Sorteio, SorteioJogador
 from backend.services.player_service import (
