@@ -1,40 +1,35 @@
-from backend.models.entities import Goleiro, Jogador
+from sqlalchemy.orm import joinedload
+from backend.models.entities import Jogador, Posicao
 
 
-def listar_ativos(db):
-    return Jogador.query.filter_by(ativo=True).order_by(Jogador.nome).all()
+def listar_ativos(db, incluir_inativos=False):
+    q = Jogador.query
+    if not incluir_inativos:
+        q = q.filter_by(ativo=True)
+    return q.order_by(Jogador.nome).all()
 
 
-def listar_goleiros():
-    return Goleiro.query.filter_by(ativo=True).order_by(Goleiro.nome).all()
-
-
-def criar(db, nome, estrelas, posicao):
-    jogador = Jogador(nome=nome, estrelas=estrelas, posicao=posicao)
+def criar(db, nome, nota, posicoes_ids, restricoes_ids, is_goleiro):
+    jogador = Jogador(nome=nome, nota=nota, is_goleiro=is_goleiro)
     db.session.add(jogador)
+    db.session.flush()
+    if posicoes_ids:
+        jogador.posicoes = Posicao.query.filter(Posicao.id.in_(posicoes_ids)).all()
+    if restricoes_ids:
+        jogador.restricoes = Jogador.query.filter(Jogador.id.in_(restricoes_ids)).all()
     db.session.commit()
     return jogador
 
 
-def editar(db, jogador_id, nome, estrelas, posicao):
+def editar(db, jogador_id, nome, nota, posicoes_ids, restricoes_ids, is_goleiro):
     jogador = db.get_or_404(Jogador, jogador_id)
-    jogador.nome, jogador.estrelas, jogador.posicao = nome, estrelas, posicao
+    jogador.nome = nome
+    jogador.nota = nota
+    jogador.is_goleiro = is_goleiro
+    jogador.posicoes = Posicao.query.filter(Posicao.id.in_(posicoes_ids)).all() if posicoes_ids else []
+    jogador.restricoes = Jogador.query.filter(Jogador.id.in_(restricoes_ids)).all() if restricoes_ids else []
     db.session.commit()
     return jogador
-
-
-def editar_goleiro(db, goleiro_id, nome):
-    goleiro = db.get_or_404(Goleiro, goleiro_id)
-    goleiro.nome = nome
-    db.session.commit()
-    return goleiro
-
-
-def criar_goleiro(db, nome):
-    goleiro = Goleiro(nome=nome)
-    db.session.add(goleiro)
-    db.session.commit()
-    return goleiro
 
 
 def desativar(db, jogador_id):
@@ -44,22 +39,18 @@ def desativar(db, jogador_id):
     return jogador
 
 
-def desativar_goleiro(db, goleiro_id):
-    goleiro = db.get_or_404(Goleiro, goleiro_id)
-    goleiro.ativo = False
-    db.session.commit()
-    return goleiro
-
-
 def buscar_selecionados(ids):
-    return Jogador.query.filter(Jogador.id.in_(ids), Jogador.ativo.is_(True)).all()
+    return Jogador.query.filter(Jogador.id.in_(ids), Jogador.ativo.is_(True)).options(
+        joinedload(Jogador.posicoes),
+        joinedload(Jogador.restricoes),
+    ).all()
 
 
-def validar_formulario(nome, estrelas):
+def validar_formulario(nome, nota):
     if not nome:
         return "Informe o nome do jogador."
-    if not 0.5 <= estrelas <= 5:
-        return "A nota deve estar entre 0,5 e 5 estrelas."
+    if not 1 <= nota <= 5:
+        return "A nota deve estar entre 1 e 5 estrelas."
     return None
 
 
