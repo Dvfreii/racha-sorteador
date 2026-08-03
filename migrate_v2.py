@@ -26,7 +26,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = _normalizar_uri(
 db.init_app(app)
 
 import backend.models.entities  # noqa: E402
-from backend.models.entities import Jogador, Posicao, SorteioJogador  # noqa: E402
+from backend.models.entities import Jogador, Posicao  # noqa: E402
 
 
 def migrate():
@@ -38,7 +38,29 @@ def migrate():
                 db.session.add(Posicao(nome=nome))
         db.session.commit()
 
+        # Migrate old posicao string -> N:N
+        posicao_map = {p.nome.lower().replace(" / ", "/").replace("-", ""): p for p in Posicao.query.all()}
+        for j in Jogador.query.filter_by(ativo=True).all():
+            if not j.posicoes:
+                old = getattr(j, "posicao", "")
+                if old:
+                    key = old.strip().lower().replace(" / ", "/").replace("-", "")
+                    pos = posicao_map.get(key)
+                    if pos:
+                        j.posicoes.append(pos)
+        db.session.commit()
+
+        # Migrate SorteioGoleiro -> SorteioJogador.is_goleiro_no_time
         from sqlalchemy import text  # noqa: E402
+        try:
+            db.session.execute(text(
+                "INSERT INTO sorteio_jogador (sorteio_id, jogador_id, time, is_goleiro_no_time) "
+                "SELECT sg.sorteio_id, sg.goleiro_id, 'Goleiro', 1 FROM sorteio_goleiro sg "
+                "WHERE NOT EXISTS (SELECT 1 FROM sorteio_jogador sj WHERE sj.sorteio_id = sg.sorteio_id AND sj.jogador_id = sg.goleiro_id)"
+            ))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
         print("Migration complete.")
         print(f"  Jogadores: {Jogador.query.filter_by(ativo=True).count()}")
