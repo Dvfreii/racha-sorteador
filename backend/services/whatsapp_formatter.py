@@ -13,10 +13,12 @@ def _icone(jogador):
 def _estrelas(jogador):
     nota = getattr(jogador, "nota", 3)
     inteiro = int(nota)
-    resto = nota - inteiro
-    if resto == 0.5:
+    resto = round(nota - inteiro, 1)
+    if resto >= 0.8:
+        return "\u2605" * (inteiro + 1)
+    elif resto >= 0.3:
         return "\u2605" * inteiro + "\u00BD"
-    return "\u2605" * inteiro
+    return "\u2605" * inteiro if inteiro > 0 else "\u00BD"
 
 
 def _posicoes_str(jogador):

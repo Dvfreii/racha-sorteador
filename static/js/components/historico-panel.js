@@ -2,6 +2,12 @@ import { qs } from '../utils/dom.js';
 import { estrelas } from '../utils/format.js';
 import { getHistorico, deleteSorteio } from '../api/sorteios.js';
 
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 export async function renderHistoricoPanel(container) {
   container.innerHTML = '<p class="text-muted">Carregando...</p>';
 
@@ -23,7 +29,7 @@ export async function renderHistoricoPanel(container) {
       html += '<div class="history-teams">';
       for (const [nome, jogadores] of Object.entries(s.times)) {
         html += `<div><strong>${nome}</strong> (Media ${s.medias[nome]})<small>`;
-        html += jogadores.map(j => `${j.nome} ${estrelas(j.nota)}`).join(', ');
+        html += jogadores.map(j => `${esc(j.nome)} ${estrelas(j.nota)}`).join(', ');
         html += '</small></div>';
       }
       html += '</div>';

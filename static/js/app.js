@@ -44,8 +44,4 @@ window.addEventListener('open-whatsapp-preview', (e) => {
   showWhatsAppPreview(e.detail);
 });
 
-document.querySelectorAll('.jogador-check')?.forEach(cb => {
-  cb.addEventListener('change', updateCounter);
-});
-
 bootstrap();

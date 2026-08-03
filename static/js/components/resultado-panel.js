@@ -3,6 +3,12 @@ import { estrelas, iconePosicao } from '../utils/format.js';
 import { salvarSorteio } from '../api/sorteios.js';
 import state from '../state.js';
 
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 export function renderResultadoPanel(container, resultado) {
   if (!resultado) { container.innerHTML = ''; return; }
 
@@ -18,10 +24,10 @@ export function renderResultadoPanel(container, resultado) {
     html += `<div class="col-12 col-md-4"><div class="team">`;
     html += `<div class="team-title"><h3>${nome}</h3><span>${media} \u2605</span></div><ol>`;
     for (const j of jogadores) {
-      html += `<li><span>${iconePosicao(j)} ${j.nome}</span><small>${estrelas(j.nota)}</small></li>`;
+      html += `<li><span>${iconePosicao(j)} ${esc(j.nome)}</span><small>${estrelas(j.nota)}</small></li>`;
     }
     html += `</ol>`;
-    html += `<div class="goalie-note">\uD83E\uDD45 Goleiro: <strong>${goleiro ? goleiro.nome : 'Improvisado'}</strong></div>`;
+    html += `<div class="goalie-note">\uD83E\uDD45 Goleiro: <strong>${goleiro ? esc(goleiro.nome) : 'Improvisado'}</strong></div>`;
     html += `</div></div>`;
   }
 

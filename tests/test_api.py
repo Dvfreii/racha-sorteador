@@ -7,6 +7,16 @@ os.environ["RACHA_DATABASE_URI"] = f"sqlite:///{_db_path}"
 from app import app
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _cleanup_tempdb():
+    yield
+    os.close(_db_fd)
+    try:
+        os.unlink(_db_path)
+    except PermissionError:
+        pass
+
+
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
