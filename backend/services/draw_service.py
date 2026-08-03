@@ -1,26 +1,45 @@
 from sorteio_engine import historico_para_engine, sortear_times
-from backend.models.entities import Sorteio, SorteioGoleiro, SorteioJogador
+from backend.models.entities import Sorteio, SorteioJogador
+from sqlalchemy.orm import joinedload
 
 
-def salvar(db, ids, times, goleiros=None):
+def salvar(db, times, goleiros):
     sorteio = Sorteio()
     db.session.add(sorteio)
     db.session.flush()
-    for jogador_id, time in zip(ids, times):
-        db.session.add(SorteioJogador(
-            sorteio_id=sorteio.id,
-            jogador_id=int(jogador_id),
-            time=time,
-        ))
-    for goleiro_id in goleiros or []:
-        if goleiro_id:
-            db.session.add(SorteioGoleiro(sorteio_id=sorteio.id, goleiro_id=int(goleiro_id)))
+
+    for nome_time, ids in times.items():
+        goleiro_id = goleiros.get(nome_time)
+        for jogador_id in ids:
+            db.session.add(SorteioJogador(
+                sorteio_id=sorteio.id,
+                jogador_id=jogador_id,
+                time=nome_time,
+                is_goleiro_no_time=(jogador_id == goleiro_id),
+            ))
     db.session.commit()
     return sorteio
 
 
-
 def gerar(jogadores, quantidade=3, tamanhos=None):
-    historico = Sorteio.query.order_by(Sorteio.data.desc()).limit(3).all()
-    return sortear_times(jogadores, historico_para_engine(historico), quantidade=quantidade, tamanhos=tamanhos)
+    """Legacy: returns {nome: [jogadores]} dict for old frontend compat."""
+    historico = Sorteio.query.options(
+        joinedload(Sorteio.itens).joinedload(SorteioJogador.jogador)
+    ).order_by(Sorteio.data.desc()).limit(3).all()
+    times, _, _ = sortear_times(jogadores, historico=historico_para_engine(historico), quantidade=quantidade, tamanhos=tamanhos)
+    return times
 
+
+def gerar_v2(jogadores, quantidade=3, tamanhos=None):
+    """Returns (times, goleiros, medias) tuple."""
+    historico = Sorteio.query.options(
+        joinedload(Sorteio.itens).joinedload(SorteioJogador.jogador)
+    ).order_by(Sorteio.data.desc()).limit(3).all()
+    return sortear_times(jogadores, historico=historico_para_engine(historico), quantidade=quantidade, tamanhos=tamanhos)
+
+
+def listar_historico(limite=10, offset=0):
+    sorteios = Sorteio.query.options(
+        joinedload(Sorteio.itens).joinedload(SorteioJogador.jogador)
+    ).order_by(Sorteio.data.desc()).offset(offset).limit(limite).all()
+    return sorteios

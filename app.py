@@ -18,10 +18,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = _normalizar_uri(
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
-from backend.models.entities import Goleiro, Jogador, Sorteio, SorteioGoleiro, SorteioJogador
+from api.jogadores_bp import jogadores_bp
+from api.posicoes_bp import posicoes_bp
+app.register_blueprint(jogadores_bp)
+app.register_blueprint(posicoes_bp)
+
+from backend.models.entities import Jogador, Sorteio, SorteioJogador
 from backend.services.player_service import (
-    buscar_selecionados, criar, criar_goleiro, desativar, desativar_goleiro,
-    editar, editar_goleiro, listar_ativos, listar_goleiros,
+    buscar_selecionados, criar, desativar,
+    editar, listar_ativos,
     validar_formulario, validar_selecao,
 )
 from backend.services.draw_service import gerar, salvar
