@@ -77,9 +77,9 @@ def sortear_times(jogadores, historico=None, tentativas=4000, quantidade=3, tama
     jogadores_linha = [j for j in jogadores if not _get(j, "is_goleiro", False)]
 
     historico = historico or []
-    tamanhos_lista = tamanhos_dos_times(len(jogadores), quantidade, _parse_tamanhos(tamanhos))
 
     if not goleiros:
+        tamanhos_lista = tamanhos_dos_times(len(jogadores), quantidade, _parse_tamanhos(tamanhos))
         gols_por_time = {_time_nome(i): None for i in range(quantidade)}
         melhor, melhor_pontuacao = None, float("inf")
         melhor_gols = None
@@ -100,7 +100,7 @@ def sortear_times(jogadores, historico=None, tentativas=4000, quantidade=3, tama
 
         medias = {}
         for nome, time in melhor.items():
-            notas = [_get(j, "nota", 0) for j in time]
+            notas = [_get(j, "nota", 0) for j in time if not _get(j, "is_goleiro", False)]
             medias[nome] = round(sum(notas) / len(notas) if notas else 0, 2)
 
         return melhor, gols_por_time, medias
@@ -121,6 +121,8 @@ def sortear_times(jogadores, historico=None, tentativas=4000, quantidade=3, tama
         goleiros_time = gols
         todos_linha = list(jogadores_linha)
 
+    tamanhos_lista = tamanhos_dos_times(len(todos_linha), quantidade, _parse_tamanhos(tamanhos))
+
     melhor, melhor_pontuacao = None, float("inf")
     melhor_gols = None
 
@@ -138,8 +140,7 @@ def sortear_times(jogadores, historico=None, tentativas=4000, quantidade=3, tama
         times = {nome: [] for nome in nomes_times}
         inicio = 0
         for i, nome in enumerate(nomes_times):
-            goleiro_aqui = 1 if gols_por_time[nome] else 0
-            tam_linha = tamanhos_lista[i] - goleiro_aqui
+            tam_linha = tamanhos_lista[i]
             times[nome] = linha[inicio:inicio + tam_linha]
             inicio += tam_linha
 
@@ -161,7 +162,7 @@ def sortear_times(jogadores, historico=None, tentativas=4000, quantidade=3, tama
 
     medias = {}
     for nome, time in times_finais.items():
-        notas = [_get(j, "nota", 0) for j in time]
+        notas = [_get(j, "nota", 0) for j in time if not _get(j, "is_goleiro", False)]
         medias[nome] = round(sum(notas) / len(notas) if notas else 0, 2)
 
     return times_finais, goleiros_finais, medias

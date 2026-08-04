@@ -11,10 +11,10 @@
   <aside class="app-sidebar">
     <div class="sidebar-brand">Racha<span>Lab</span></div>
     <nav>
-      <a class="active" href="#topo">Inicio</a>
+      <a href="#topo">Inicio</a>
       <a href="#elenco">Jogadores</a>
-      <a href="#sorteio">Sorteio</a>
-      <a href="#historico">Historico</a>
+      <a href="#presentes">Sorteio</a>
+      <a href="#section-historico">Historico</a>
     </nav>
   </aside>
   <main class="container app-shell py-4" id="topo">
@@ -34,6 +34,7 @@
 
     <section class="panel mb-4" id="presentes">
       <div class="panel-heading"><span class="section-kicker">02 · PRESENTES</span><h2>Quem vai jogar?</h2></div>
+      <div class="mb-2"><input id="filter-nome" class="form-control" placeholder="Filtrar por nome..." autocomplete="off"></div>
       <div id="section-list"></div>
       <div id="section-sorteio" class="mt-3"></div>
     </section>

@@ -10,9 +10,12 @@ import { renderWhatsAppPreview, showWhatsAppPreview } from './components/whatsap
 import { mountStarRatings } from './components/star-rating.js';
 import { qs, qsa } from './utils/dom.js';
 
+let allJogadores = [];
+
 async function bootstrap() {
   try {
-    state.jogadores = await getJogadores();
+    allJogadores = await getJogadores();
+    state.jogadores = allJogadores;
     state.posicoes = await getPosicoes();
   } catch (err) {
     console.error('Falha ao carregar dados:', err);
@@ -39,10 +42,68 @@ async function bootstrap() {
     qs('#import-result').innerHTML = `<div class="alert alert-success">Importados ${data.adicionados} jogadores/goleiros.</div>`;
     window.dispatchEvent(new CustomEvent('jogadores-changed'));
   });
+
+  setupAsideNav();
+  setupSearchFilter();
+}
+
+function setupAsideNav() {
+  const links = qsa('.app-sidebar nav a');
+  const sections = links.map(a => {
+    const href = a.getAttribute('href');
+    return href ? document.querySelector(href) : null;
+  });
+
+  links.forEach((a, i) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = sections[i];
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        setActive(links, i);
+      }
+    });
+  });
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      let activeIdx = 0;
+      const scrollPos = window.scrollY + 100;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        if (sections[i] && sections[i].offsetTop <= scrollPos) {
+          activeIdx = i;
+          break;
+        }
+      }
+      setActive(links, activeIdx);
+      ticking = false;
+    });
+  });
+}
+
+function setActive(links, idx) {
+  links.forEach((a, i) => a.classList.toggle('active', i === idx));
+}
+
+function setupSearchFilter() {
+  const input = document.getElementById('filter-nome');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const term = input.value.toLowerCase().trim();
+    state.jogadores = term
+      ? allJogadores.filter(j => j.nome.toLowerCase().includes(term))
+      : allJogadores;
+    renderJogadorList(qs('#section-list'), state.jogadores);
+    renderSorteadorPanel(qs('#section-sorteio'));
+  });
 }
 
 window.addEventListener('jogadores-changed', async () => {
-  state.jogadores = await getJogadores();
+  allJogadores = await getJogadores();
+  state.jogadores = allJogadores;
   renderJogadorList(qs('#section-list'), state.jogadores);
   renderSorteadorPanel(qs('#section-sorteio'));
   renderResultadoPanel(qs('#section-resultado'), null);
@@ -58,13 +119,5 @@ window.addEventListener('sorteio-done', (e) => {
 window.addEventListener('open-whatsapp-preview', (e) => {
   showWhatsAppPreview(e.detail);
 });
-
-window.addEventListener('jogadores-changed', () => {
-  const checks = qsa('.jogador-check');
-  checks.forEach(cb => {
-    cb.addEventListener('change', updateCounter);
-  });
-  updateCounter();
-}, { once: false });
 
 bootstrap();

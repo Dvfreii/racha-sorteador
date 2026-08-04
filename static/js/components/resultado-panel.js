@@ -24,6 +24,7 @@ export function renderResultadoPanel(container, resultado) {
     html += `<div class="col-12 col-md-4"><div class="team">`;
     html += `<div class="team-title"><h3>${nome}</h3><span>${media} \u2605</span></div><ol>`;
     for (const j of jogadores) {
+      if (j.is_goleiro) continue;
       html += `<li><span>${iconePosicao(j)} ${esc(j.nome)}</span><small>${estrelas(j.nota)}</small></li>`;
     }
     html += `</ol>`;

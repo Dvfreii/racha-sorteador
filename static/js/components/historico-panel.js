@@ -23,7 +23,8 @@ export async function renderHistoricoPanel(container) {
     html += '<div class="panel-heading"><h2>Historico</h2></div>';
 
     for (const s of historico) {
-      const data = new Date(s.data).toLocaleString('pt-BR');
+      const d = new Date(s.data);
+      const data = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       html += `<details class="history-item">`;
       html += `<summary>Sorteio #${s.id} \u00B7 ${data} <button class="btn-del-sorteio icon-button" data-id="${s.id}" title="Excluir">\u00D7</button></summary>`;
       html += '<div class="history-teams">';
