@@ -172,14 +172,16 @@ def _pontuar(times, gols_por_time, historico, todos_jogadores):
     score = 0
 
     times_completos = {}
+    times_linha = {}
     for nome in times:
         time = list(times[nome])
         g = gols_por_time.get(nome)
         if g:
             time.insert(0, g)
         times_completos[nome] = time
+        times_linha[nome] = [j for j in time if not _get(j, "is_goleiro", False)]
 
-    # Restricao = infinite
+    # Restricao = infinite (inclui goleiros)
     restricao_map = {}
     for j in todos_jogadores:
         restricao_map[j.id] = _ids_restritos(j)
@@ -191,13 +193,14 @@ def _pontuar(times, gols_por_time, historico, todos_jogadores):
             if ids & restritos:
                 return float("inf")
 
-    # Balanceamento
-    totais = [sum(_get(j, "nota", 0) for j in t) for t in times_completos.values()]
+    # Balanceamento (so jogadores de linha)
+    totais = [sum(_get(j, "nota", 0) for j in t) for t in times_linha.values()]
     if totais:
         media = sum(totais) / len(totais)
         score += sum(abs(t - media) ** 2 for t in totais) * 30
 
-    for time in times_completos.values():
+    # Posicoes (so jogadores de linha)
+    for time in times_linha.values():
         tem_zagueiro = any(_tem_posicao(j, "Zagueiro") or _tem_posicao(j, "Fixo") for j in time)
         if not tem_zagueiro:
             score += 10000
