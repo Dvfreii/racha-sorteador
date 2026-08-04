@@ -148,4 +148,4 @@ def test_whatsapp_format(client):
         "medias": {"Time A": 3.5},
     })
     assert r.status_code == 200
-    assert "RACHALAB" in r.get_json()["texto"]
+    assert "Times da Rodada" in r.get_json()["texto"]

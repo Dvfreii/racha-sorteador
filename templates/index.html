@@ -21,10 +21,8 @@
     <div id="flash-area"></div>
 
     <section class="panel mb-4 import-panel" id="importacao">
-      <div class="panel-heading"><div><span class="section-kicker">IMPORTACAO</span><h2>Colar lista do WhatsApp</h2></div></div>
-      <textarea id="import-textarea" class="form-control" rows="7" placeholder="Cole aqui a lista do WhatsApp..."></textarea>
-      <button id="btn-importar" class="btn btn-primary mt-2">Importar lista</button>
-      <div id="import-result" class="mt-2"></div>
+      <div class="panel-heading"><div><span class="section-kicker">IMPORTACAO</span><h2>Importar jogadores</h2></div></div>
+      <button id="btn-open-import" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#import-modal">Importar lista do WhatsApp</button>
     </section>
 
     <section class="panel mb-4" id="elenco">
@@ -56,6 +54,24 @@
       <div class="modal-body edit-player-body"></div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="btn-salvar-edit">Salvar alteracoes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="import-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Importar lista do WhatsApp</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <textarea id="import-textarea" class="form-control" rows="10" placeholder="Cole aqui a lista do WhatsApp..."></textarea>
+        <div id="import-result" class="mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-importar" class="btn btn-primary">Importar</button>
       </div>
     </div>
   </div>

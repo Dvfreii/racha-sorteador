@@ -63,6 +63,11 @@ label{font-size:14px;color:var(--ink);font-weight:700;margin:0 0 5px;display:blo
 .team li{padding:7px 0;border-bottom:1px dashed var(--outline);font-size:14px}
 .team li small{float:right;color:var(--muted)}
 .goalie-note{margin-top:14px;border-radius:8px;background:#e8f1ff;color:#31547c;padding:10px;font-size:13px}
+.team-columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.team-col{background:var(--bg);border:1px solid var(--outline);border-radius:12px;padding:18px}
+.team-col-title{font-size:18px;color:var(--primary);margin:0 0 12px;font-weight:700;text-align:center}
+.team-col-list{list-style:none;margin:0;padding:0}
+.team-col-list li{padding:7px 0;border-bottom:1px dashed var(--outline);font-size:14px}
 .history-item{background:var(--surface);border:1px solid transparent;border-radius:10px;margin:8px 0;padding:0 14px}
 .history-item summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:10px;padding:14px 0}
 .history-item summary::-webkit-details-marker{display:none}

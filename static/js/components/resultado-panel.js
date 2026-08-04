@@ -1,5 +1,4 @@
 import { qs } from '../utils/dom.js';
-import { estrelas, iconePosicao } from '../utils/format.js';
 import { salvarSorteio } from '../api/sorteios.js';
 import state from '../state.js';
 
@@ -12,30 +11,34 @@ function esc(str) {
 export function renderResultadoPanel(container, resultado) {
   if (!resultado) { container.innerHTML = ''; return; }
 
-  const { times, goleiros, medias } = resultado;
+  const { times, goleiros } = resultado;
 
   let html = '<section class="results mt-4">';
   html += '<div class="panel-heading"><div><span class="section-kicker">RESULTADO</span><h2>Times sorteados</h2></div></div>';
-  html += '<div class="row g-3">';
+  html += '<div class="team-columns">';
 
-  for (const [nome, jogadores] of Object.entries(times)) {
-    const media = medias[nome];
+  const nomes = Object.keys(times);
+  for (let i = 0; i < nomes.length; i++) {
+    const nome = nomes[i];
+    const jogadores = times[nome];
     const goleiro = goleiros[nome];
-    html += `<div class="col-12 col-md-4"><div class="team">`;
-    html += `<div class="team-title"><h3>${nome}</h3><span>${media} \u2605</span></div><ol>`;
+    html += `<div class="team-col">`;
+    html += `<h3 class="team-col-title">Time ${i + 1}</h3>`;
+    html += '<ul class="team-col-list">';
     for (const j of jogadores) {
       if (j.is_goleiro) continue;
-      html += `<li><span>${iconePosicao(j)} ${esc(j.nome)}</span><small>${estrelas(j.nota)}</small></li>`;
+      if (goleiro && j.nome === goleiro.nome) continue;
+      html += `<li>${esc(j.nome)}</li>`;
     }
-    html += `</ol>`;
-    html += `<div class="goalie-note">\uD83E\uDD45 Goleiro: <strong>${goleiro ? esc(goleiro.nome) : 'Improvisado'}</strong></div>`;
-    html += `</div></div>`;
+    html += '</ul>';
+    html += `<div class="goalie-note">Goleiro: <strong>${goleiro ? esc(goleiro.nome) : 'Improvisado'}</strong></div>`;
+    html += '</div>';
   }
 
   html += '</div>';
   html += '<div class="d-flex gap-2 mt-3">';
   html += '<button id="btn-salvar" class="btn btn-outline-primary">Salvar no historico</button>';
-  html += '<button id="btn-copiar" class="btn btn-primary">\uD83D\uDCCB Copiar para WhatsApp</button>';
+  html += '<button id="btn-copiar" class="btn btn-primary">Copiar para WhatsApp</button>';
   html += '</div>';
   html += '</section>';
 

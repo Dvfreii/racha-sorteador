@@ -1,5 +1,4 @@
 import { qs } from '../utils/dom.js';
-import { estrelas } from '../utils/format.js';
 import { getHistorico, deleteSorteio } from '../api/sorteios.js';
 
 function esc(str) {
@@ -27,18 +26,21 @@ export async function renderHistoricoPanel(container) {
       const data = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       html += `<details class="history-item">`;
       html += `<summary>Sorteio #${s.id} \u00B7 ${data} <button class="btn-del-sorteio icon-button" data-id="${s.id}" title="Excluir">\u00D7</button></summary>`;
-      html += '<div class="history-teams">';
-      for (const [nome, jogadores] of Object.entries(s.times)) {
-        html += `<div><strong>${nome}</strong> (Media ${s.medias[nome]})<small>`;
-        html += jogadores.map(j => `${esc(j.nome)} ${estrelas(j.nota)}`).join(', ');
-        html += '</small></div>';
-      }
-      html += '</div>';
-      html += '<div class="history-goalies">';
-      const goleiros = Object.entries(s.goleiros || {});
-      if (goleiros.length) {
-        html += '<strong>Goleiros</strong><div class="history-goalies-list">';
-        html += goleiros.map(([time, nome]) => `\uD83E\uDD45 ${time}: ${nome}`).join(', ');
+      html += '<div class="team-columns">';
+      const nomes = Object.keys(s.times);
+      for (let i = 0; i < nomes.length; i++) {
+        const nome = nomes[i];
+        const jogadores = s.times[nome];
+        const g = (s.goleiros || {})[nome];
+        html += `<div class="team-col">`;
+        html += `<h3 class="team-col-title">Time ${i + 1}</h3>`;
+        html += '<ul class="team-col-list">';
+        for (const j of jogadores) {
+          if (g && j.nome === g) continue;
+          html += `<li>${esc(j.nome)}</li>`;
+        }
+        html += '</ul>';
+        if (g) html += `<div class="goalie-note">Goleiro: <strong>${esc(g)}</strong></div>`;
         html += '</div>';
       }
       html += '</div></details>';

@@ -32,13 +32,16 @@ def test_formatar_whatsapp():
 
     texto = formatar_whatsapp(times, goleiros, medias)
 
-    assert "RACHALAB" in texto
-    assert "Time A" in texto
-    assert "Time B" in texto
-    assert "Media: 3.5" in texto
-    assert "Media: 3.2" in texto
+    assert "Times da Rodada" in texto
+    assert "Time 1" in texto
+    assert "Time 2" in texto
+    assert "Comeca com a bola" in texto
+    assert "Escolhe o lado" in texto
     assert "Joao" in texto
     assert "Pedro" in texto
-    assert "\U0001F9E4" in texto
-    assert "\u26BD" in texto
-    assert "\U0001F6E1" in texto
+    assert "Goleiro: Joao" in texto
+    assert "Goleiro: Maria" in texto
+    assert "listrado" in texto
+    assert "azul" in texto
+    assert "\u2605" not in texto
+    assert "RACHALAB" not in texto

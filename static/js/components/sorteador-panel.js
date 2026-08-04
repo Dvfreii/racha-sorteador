@@ -11,13 +11,13 @@ export function renderSorteadorPanel(container) {
       <span id="contador" class="count-badge">${selectedCount} selecionados</span>
     </div>
     <div class="draw-options row g-2 mt-2">
-      <div class="col-6">
+      <div class="col-12 col-sm-6">
         <label>Quantidade de times</label>
         <select id="team-count" class="form-select">
           ${[2,3,4,5,6,7,8].map(n => `<option value="${n}" ${n === 3 ? 'selected' : ''}>${n} times</option>`).join('')}
         </select>
       </div>
-      <div class="col-6">
+      <div class="col-12 col-sm-6">
         <label>Jogadores por time (opcional)</label>
         <input id="por-time" class="form-control" placeholder="Ex.: 8" value="8">
       </div>

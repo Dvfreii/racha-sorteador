@@ -1,54 +1,50 @@
-"""Formatador de resultado para WhatsApp com emojis."""
+"""Formatador de resultado para WhatsApp."""
 
+ROTULOS = {
+    1: "Comeca com a bola",
+    2: "Escolhe o lado",
+    3: "Comeca fora",
+}
 
-def _icone(jogador):
-    pos_nomes = [p.nome.lower() for p in getattr(jogador, "posicoes", [])]
-    if getattr(jogador, "is_goleiro", False):
-        return "\U0001F9E4"
-    if any("zagueiro" in p or "fixo" in p for p in pos_nomes):
-        return "\U0001F6E1\uFE0F"
-    return "\u26BD"
-
-
-def _estrelas(jogador):
-    nota = getattr(jogador, "nota", 3)
-    inteiro = int(nota)
-    resto = round(nota - inteiro, 1)
-    if resto >= 0.8:
-        return "\u2605" * (inteiro + 1)
-    elif resto >= 0.3:
-        return "\u2605" * inteiro + "\u00BD"
-    return "\u2605" * inteiro if inteiro > 0 else "\u00BD"
-
-
-def _posicoes_str(jogador):
-    posicoes = getattr(jogador, "posicoes", [])
-    if posicoes:
-        nomes = [getattr(p, "nome", str(p)) for p in posicoes]
-        if nomes:
-            return " (" + ", ".join(nomes) + ")"
-    return ""
+CORES = {
+    1: "listrado",
+    2: "azul",
+}
 
 
 def formatar_whatsapp(times, goleiros, medias):
-    linhas = ["\u26BD *RACHALAB \u2014 Times da Rodada* \u26BD", ""]
+    linhas = ["*Times da Rodada*", ""]
+    nomes = list(times.keys())
 
-    for nome, time in times.items():
-        media = medias.get(nome, 0)
-        linhas.append(f"*{nome}* (Media: {media:.1f})")
+    for idx, nome in enumerate(nomes, start=1):
+        rotulo = ROTULOS.get(idx, "")
+        cabecalho = f"*Time {idx}"
+        if rotulo:
+            cabecalho += f" ({rotulo})"
+        cabecalho += "*"
+        linhas.append(cabecalho)
 
-        for jogador in time:
-            icone = _icone(jogador)
-            est = _estrelas(jogador)
-            pos = _posicoes_str(jogador)
-            linhas.append(f"{icone} {jogador.nome}{pos} {est}")
+        for jogador in times[nome]:
+            linhas.append(jogador.nome)
 
         g = goleiros.get(nome)
         if g and hasattr(g, "nome"):
-            linhas.append(f"\U0001F9E4 Goleiro: {g.nome}")
+            linhas.append(f"Goleiro: {g.nome}")
         elif g is None:
-            linhas.append("\U0001F9E4 Goleiro: Improvisado")
+            linhas.append("Goleiro: Improvisado")
 
         linhas.append("")
+
+    linhas.append("---")
+    for idx, nome in enumerate(nomes, start=1):
+        rotulo = ROTULOS.get(idx, "")
+        cor = CORES.get(idx, "")
+        linha = f"*Time {idx}:"
+        if rotulo:
+            linha += f" {rotulo.lower()}"
+        if cor:
+            linha += f" e joga de {cor}"
+        linha += "*"
+        linhas.append(linha)
 
     return "\n".join(linhas)
