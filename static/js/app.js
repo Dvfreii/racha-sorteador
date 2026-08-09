@@ -9,6 +9,7 @@ import { renderHistoricoPanel } from './components/historico-panel.js';
 import { renderWhatsAppPreview, showWhatsAppPreview } from './components/whatsapp-preview.js';
 import { mountStarRatings } from './components/star-rating.js';
 import { qs, qsa } from './utils/dom.js';
+import { salvarSorteio } from './api/sorteios.js';
 
 let allJogadores = [];
 
@@ -102,18 +103,37 @@ function setupSearchFilter() {
 }
 
 window.addEventListener('jogadores-changed', async () => {
+  const selecionados = [...qsa('.jogador-check:checked')].map(el => el.value);
   allJogadores = await getJogadores();
   state.jogadores = allJogadores;
   renderJogadorList(qs('#section-list'), state.jogadores);
+  document.querySelectorAll('.jogador-check').forEach(cb => {
+    cb.checked = selecionados.includes(cb.value);
+  });
   renderSorteadorPanel(qs('#section-sorteio'));
-  renderResultadoPanel(qs('#section-resultado'), null);
   updateCounter();
   renderHistoricoPanel(qs('#section-historico'));
 });
 
-window.addEventListener('sorteio-done', (e) => {
+window.addEventListener('sorteio-done', async (e) => {
   renderResultadoPanel(qs('#section-resultado'), e.detail);
   document.getElementById('section-resultado')?.scrollIntoView({ behavior: 'smooth' });
+
+  const { times, goleiros } = e.detail;
+  const timesIds = {};
+  for (const [nome, jogadores] of Object.entries(times)) {
+    timesIds[nome] = jogadores.map(j => j.id);
+  }
+  const goleirosIds = {};
+  for (const [nome, g] of Object.entries(goleiros)) {
+    goleirosIds[nome] = g ? g.id : null;
+  }
+  try {
+    await salvarSorteio(timesIds, goleirosIds);
+    window.dispatchEvent(new CustomEvent('jogadores-changed'));
+  } catch (err) {
+    // ponytail: silent auto-save failure, manual save still available
+  }
 });
 
 window.addEventListener('open-whatsapp-preview', (e) => {

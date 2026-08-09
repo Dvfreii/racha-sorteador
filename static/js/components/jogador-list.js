@@ -1,6 +1,7 @@
 import { estrelas, iconePosicao } from '../utils/format.js';
 import { deleteJogador, updateJogador } from '../api/jogadores.js';
 import { mountStarRatings } from './star-rating.js';
+import { updateCounter } from './sorteador-panel.js';
 import state from '../state.js';
 
 function esc(str) {
@@ -53,6 +54,12 @@ export function renderJogadorList(container, jogadores) {
       const jogador = state.jogadores.find(j => j.id === id);
       if (jogador) openEditModal(jogador);
     });
+  });
+
+  container.addEventListener('change', (e) => {
+    if (e.target.classList.contains('jogador-check')) {
+      updateCounter();
+    }
   });
 }
 

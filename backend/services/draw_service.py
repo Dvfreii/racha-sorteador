@@ -1,6 +1,10 @@
 from sorteio_engine import historico_para_engine, sortear_times
 from backend.models.entities import Sorteio, SorteioJogador
+from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
+
+
+MAX_HISTORICO = 3
 
 
 def salvar(db, times, goleiros):
@@ -18,6 +22,13 @@ def salvar(db, times, goleiros):
                 is_goleiro_no_time=(jogador_id == goleiro_id),
             ))
     db.session.commit()
+
+    # ponytail: keep only last MAX_HISTORICO draws, oldest first
+    excess = Sorteio.query.order_by(desc(Sorteio.data)).offset(MAX_HISTORICO).all()
+    for s in excess:
+        db.session.delete(s)
+    db.session.commit()
+
     return sorteio
 
 
