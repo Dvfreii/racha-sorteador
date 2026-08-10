@@ -64,13 +64,25 @@ Informe:
 
 Cole a mensagem completa na area **Colar lista do WhatsApp** e clique em **Importar lista**.
 
+**Modelo aceito (coloque a lista do WhatsApp neste formato):**
+
+```text
+1 - Nome ⭐⭐⭐
+2 - Nome ⭐⭐⭐⭐
+3 - Nome ⭐⭐⭐⭐⭐
+
+Goleiros
+1 - Nome ⭐⭐⭐
+2 - Nome ⭐⭐
+```
+
 O sistema identifica:
 - Jogadores numerados antes de `Goleiros`.
 - Goleiros numerados depois de `Goleiros`.
-- Estrelas no nome (⭐).
-- Nomes com emojis e asteriscos.
+- Estrelas no nome (⭐, ★, ☆) — cada uma vale 1 ponto na nota (padrao: 3 se nao houver estrelas).
+- Separadores aceitos: `-`, `.` ou `)` apos o numero (ex: `1 - Nome`, `1. Nome`, `1) Nome`).
 
-Exemplo:
+Exemplo real:
 
 ```text
 1 - Joabe ⭐⭐⭐⭐
