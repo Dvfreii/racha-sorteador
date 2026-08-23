@@ -1,7 +1,4 @@
+node_modules/
 __pycache__/
-*.pyc
 instance/
-.env
-*.db
-.vercel
-.vscode/
+.pytest_cache/

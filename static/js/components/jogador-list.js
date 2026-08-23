@@ -12,6 +12,16 @@ function esc(str) {
 
 window.__state = state;
 
+// ponytail: Set e a fonte de verdade da selecao entre re-renders (busca/edicao); ids de jogadores apagados ficam no Set sem efeito
+const selecao = new Set();
+
+document.addEventListener('change', (e) => {
+  if (!e.target.classList?.contains('jogador-check')) return;
+  if (e.target.checked) selecao.add(e.target.value);
+  else selecao.delete(e.target.value);
+  updateCounter();
+});
+
 export function renderJogadorList(container, jogadores) {
   if (!jogadores.length) {
     container.innerHTML = '<p class="text-muted">Nenhum jogador cadastrado.</p>';
@@ -41,6 +51,10 @@ export function renderJogadorList(container, jogadores) {
   html += '</div>';
   container.innerHTML = html;
 
+  container.querySelectorAll('.jogador-check').forEach((cb) => {
+    cb.checked = selecao.has(cb.value);
+  });
+
   container.querySelectorAll('.delete-trigger').forEach(btn => {
     btn.addEventListener('click', async () => {
       await deleteJogador(parseInt(btn.dataset.id));
@@ -54,12 +68,6 @@ export function renderJogadorList(container, jogadores) {
       const jogador = state.jogadores.find(j => j.id === id);
       if (jogador) openEditModal(jogador);
     });
-  });
-
-  container.addEventListener('change', (e) => {
-    if (e.target.classList.contains('jogador-check')) {
-      updateCounter();
-    }
   });
 }
 

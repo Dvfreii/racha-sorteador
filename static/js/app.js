@@ -103,13 +103,9 @@ function setupSearchFilter() {
 }
 
 window.addEventListener('jogadores-changed', async () => {
-  const selecionados = [...qsa('.jogador-check:checked')].map(el => el.value);
   allJogadores = await getJogadores();
   state.jogadores = allJogadores;
   renderJogadorList(qs('#section-list'), state.jogadores);
-  document.querySelectorAll('.jogador-check').forEach(cb => {
-    cb.checked = selecionados.includes(cb.value);
-  });
   renderSorteadorPanel(qs('#section-sorteio'));
   updateCounter();
   renderHistoricoPanel(qs('#section-historico'));

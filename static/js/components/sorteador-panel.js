@@ -29,8 +29,10 @@ export function renderSorteadorPanel(container) {
   qs('#select-all')?.addEventListener('click', () => {
     const checks = qsa('.jogador-check');
     const selectAll = checks.some(el => !el.checked);
-    checks.forEach(el => { el.checked = selectAll; });
-    document.getElementById('contador').textContent = `${qsa('.jogador-check').filter(el => el.checked).length} selecionados`;
+    checks.forEach(el => {
+      el.checked = selectAll;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
   });
 
   qs('#btn-sortear')?.addEventListener('click', async () => {
