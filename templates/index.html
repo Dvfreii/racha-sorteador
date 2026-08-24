@@ -12,33 +12,33 @@
     <div class="sidebar-brand">Racha<span>Lab</span></div>
     <nav>
       <a href="#topo">Inicio</a>
-      <a href="#elenco">Jogadores</a>
       <a href="#presentes">Sorteio</a>
+      <a href="#elenco">Jogadores</a>
       <a href="#section-historico">Historico</a>
     </nav>
   </aside>
   <main class="container app-shell py-4" id="topo">
     <div id="flash-area"></div>
 
-    <section class="panel mb-4 import-panel" id="importacao">
-      <div class="panel-heading"><div><span class="section-kicker">IMPORTACAO</span><h2>Importar jogadores</h2></div></div>
-      <button id="btn-open-import" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#import-modal">Importar lista do WhatsApp</button>
-    </section>
-
-    <section class="panel mb-4" id="elenco">
-      <div class="panel-heading"><span class="section-kicker">01 · ELENCO</span><h2>Adicionar jogador</h2></div>
-      <div id="section-form"></div>
-    </section>
-
     <section class="panel mb-4" id="presentes">
-      <div class="panel-heading"><span class="section-kicker">02 · PRESENTES</span><h2>Quem vai jogar?</h2></div>
+      <div class="panel-heading"><span class="section-kicker">01 · PRESENTES</span><h2>Quem vai jogar?</h2></div>
       <div class="mb-2"><input id="filter-nome" class="form-control" placeholder="Filtrar por nome..." autocomplete="off"></div>
       <div id="section-list"></div>
       <div id="section-sorteio" class="mt-3"></div>
     </section>
 
-    <div id="section-resultado"></div>
+    <section class="panel mb-4" id="elenco">
+      <div class="panel-heading"><span class="section-kicker">02 · ELENCO</span><h2>Adicionar jogador</h2></div>
+      <div id="section-form"></div>
+    </section>
+
     <div id="section-historico" class="mt-4"></div>
+    <div id="section-resultado" class="mt-4"></div>
+
+    <section class="panel mb-4 import-panel" id="importacao">
+      <div class="panel-heading"><div><span class="section-kicker">IMPORTACAO</span><h2>Importar jogadores</h2></div></div>
+      <button id="btn-open-import" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#import-modal">Importar lista do WhatsApp</button>
+    </section>
   </main>
 </div>
 
